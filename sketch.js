@@ -9,11 +9,9 @@ var Engine = Matter.Engine,
     World = Matter.World,
     Bodies = Matter.Bodies;
 
-// create engine
 var engine = Engine.create(),
     world = engine.world;
 
-// create renderer
 var render = Render.create({
     element: document.body,
     engine: engine,
@@ -26,39 +24,20 @@ var render = Render.create({
 
 Render.run(render);
 
-// create runner
 var runner = Runner.create();
 Runner.run(runner, engine);
 
-/*
-// add stiff multi-body constraint
-var bodyA = Bodies.circle(100, 400, 20);
-var bodyB = Bodies.circle(200, 400, 20);
-
-var muscle = Constraint.create({
-    bodyA: bodyA,
-    pointA: { x: 0, y: 0 },
-    bodyB: bodyB,
-    pointB: { x: 0, y: 0 }  
-});
-
-World.add(world, [bodyA, bodyB, muscle]);*/
-
-
 World.add(world, [
-    // walls
     Bodies.rectangle(400, 0, 800, 50, { isStatic: true }),
     Bodies.rectangle(400, 600, 800, 50, { isStatic: true }),
     Bodies.rectangle(800, 300, 50, 600, { isStatic: true }),
     Bodies.rectangle(0, 300, 50, 600, { isStatic: true })
 ]);
 
-// add mouse control
 var mouse = Mouse.create(render.canvas),
     mouseConstraint = MouseConstraint.create(engine, {
         mouse: mouse,
         constraint: {
-            // allow bodies on mouse to rotate
             angularStiffness: 0,
             render: {
                 visible: false
@@ -68,17 +47,14 @@ var mouse = Mouse.create(render.canvas),
 
 World.add(world, mouseConstraint);
 
-// keep the mouse in sync with rendering
 render.mouse = mouse;
 
-// fit the render viewport to the scene
 Render.lookAt(render, {
     min: { x: 0, y: 0 },
     max: { x: 800, y: 600 }
 });
 
 start = function() {
-    
     setTimeout(start, 1000);
 }
 
@@ -109,7 +85,7 @@ create_body = function() {
             pointB: {x:0, y:0},
             bodyA: bodies[i],
             bodyB: bodies[index2],
-            stiffness: 0.20,
+            stiffness: 0.05,
             length: rnd(140, 50)
         });
 

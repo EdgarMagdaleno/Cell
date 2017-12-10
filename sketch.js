@@ -16,7 +16,7 @@ var render = Render.create({
     element: document.body,
     engine: engine,
     options: {
-        width: 800,
+        width: 2000,
         height: 600,
         showAngleIndicator: true
     }
@@ -28,9 +28,9 @@ var runner = Runner.create();
 Runner.run(runner, engine);
 
 World.add(world, [
-    Bodies.rectangle(400, 0, 800, 50, { isStatic: true }),
-    Bodies.rectangle(400, 600, 800, 50, { isStatic: true }),
-    Bodies.rectangle(800, 300, 50, 600, { isStatic: true }),
+    Bodies.rectangle(400, 0, 3000, 50, { isStatic: true }),
+    Bodies.rectangle(400, 600, 3000, 50, { isStatic: true }),
+    Bodies.rectangle(1900, 300, 50, 600, { isStatic: true }),
     Bodies.rectangle(0, 300, 50, 600, { isStatic: true })
 ]);
 
@@ -51,7 +51,7 @@ render.mouse = mouse;
 
 Render.lookAt(render, {
     min: { x: 0, y: 0 },
-    max: { x: 800, y: 600 }
+    max: { x: 2000, y: 600 }
 });
 
 start = function() {

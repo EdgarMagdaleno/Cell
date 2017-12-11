@@ -58,6 +58,10 @@ rnd = function(max, min) {
 	return Math.floor((Math.random() * (max - min)) + min);
 }
 
+rnd_float = function(max, min) {
+	return (Math.random() * (max - min)) + min;
+}
+
 var Creature = function() {
 	this.nodes = [];
 	this.muscles = [];
@@ -68,6 +72,7 @@ var Creature = function() {
 
 		for(let i = 0; i < this.nodes.length; i++) {
 			this.nodes[i] = Bodies.circle(rnd(300, 140), rnd(300, 140), 20);
+			this.nodes[i].friction = rnd_float(0.99, 0.01);
 		}
 
 		for(let i = 0; i < this.nodes.length - 1; i++) {
@@ -82,8 +87,6 @@ var Creature = function() {
 				},
 				bodyA: this.nodes[i],
 				bodyB: this.nodes[i + 1],
-				index : i,
-				index2 : i + 1,
 				stiffness: 0.05,
 				length: rnd(100, 70),
 				extended_length : rnd(length, length + 50)
@@ -91,19 +94,22 @@ var Creature = function() {
 		}
 
 		let n = rnd(this.nodes.length - 1, 1);
-		console.log("N: " + n);
+
 		for(let i = 0; i < n; i++) {
-			let index = rnd(this.nodes.length - 1, 0);
-			console.log("Index: " + index);
+			let index = rnd(this.nodes.length, 0);
 			let index2 = 0;
 
 			let correct = false;
+			count = 0;
 			do {
-				index2 = rnd(this.nodes.length - 1, 0);
-				console.log("Index: " + index + " | Index2: " + index2);
+				index2 = rnd(this.nodes.length, 0);
+				count++;
+
+				if(count > 100) {
+					while(true) {}
+				}
 			} while(index2 == index || index2 == index - 1 || index2 == index + 1);
 
-			console.log("Done!");
 			this.muscles.push(Matter.Constraint.create({
 				pointA: {
 					x : 0,
@@ -115,8 +121,6 @@ var Creature = function() {
 				},
 				bodyA: this.nodes[index],
 				bodyB: this.nodes[index2],
-				index : index,
-				index2 : index2,
 				stiffness: 0.05,
 				length: rnd(100, 70),
 				extended_length : rnd(length, length + 50)
@@ -133,13 +137,11 @@ var Creature = function() {
 	}
 
 	this.spawn = function() {
-		console.log(this.nodes.length);
 		for(let i = 0; i < this.nodes.length; i++) {
 			World.add(world, this.nodes[i]);
 		}
 
 		for(let i = 0; i < this.muscles.length; i++) {
-			console.log(this.muscles[i].index + " | " + this.muscles[i].index2)
 			World.add(world, this.muscles[i]);
 		}
 	}

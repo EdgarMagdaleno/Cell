@@ -1,0 +1,49 @@
+body {
+  color: #333;
+  background-color: #EAEAEA;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px;
+  color: black;
+  background-color: white;
+  border: 1px solid black;
+  cursor: pointer;
+  transition: background-color 500ms;
+}
+.button:hover {
+  background-color: yellow;
+  border-color: none;
+}
+
+.container {
+  padding-top: 50px;
+}
+
+#header, #footer {
+  height: 60px;
+  padding: 10px 0;
+  color: white;
+  font-size: 24px;
+  text-align: center;
+  background-color: #CCC;
+}
+
+#generation-preview, #generation-view {
+  display: none;
+}
+
+#creature-video {
+  height: 500px;
+  padding: 0;
+  border: 1px solid black;
+  overflow-y: hidden;
+  overflow-x: scroll;
+}
+
+#footer {
+  position: fixed;
+  bottom: 0;
+  width: 100vw;
+}

@@ -94,7 +94,6 @@ var Creature = function() {
 		}
 
 		let n = rnd(this.nodes.length - 1, 1);
-
 		for(let i = 0; i < n; i++) {
 			let index = rnd(this.nodes.length, 0);
 			let index2 = 0;

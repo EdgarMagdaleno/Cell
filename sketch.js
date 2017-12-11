@@ -1,7 +1,7 @@
 var Engine = Matter.Engine,
 	Render = Matter.Render,
 	Runner = Matter.Runner,
-	Composites = Matter.Composites,
+	Composite = Matter.Composite,
 	Common = Matter.Common,
 	Constraint = Matter,
 	MouseConstraint = Matter.MouseConstraint,
@@ -68,11 +68,12 @@ var Creature = function() {
 	var self = this;
 
 	this.build = function() {
-	   this.nodes.length = rnd(4, 6);
+	    this.nodes.length = rnd(4, 6);
 
 		for(let i = 0; i < this.nodes.length; i++) {
 			this.nodes[i] = Bodies.circle(rnd(300, 140), rnd(300, 140), 20);
 			this.nodes[i].friction = rnd_float(0.99, 0.01);
+			Matter.Body.setMass(this.nodes[i], 0.5);
 		}
 
 		for(let i = 0; i < this.nodes.length - 1; i++) {
@@ -87,7 +88,7 @@ var Creature = function() {
 				},
 				bodyA: this.nodes[i],
 				bodyB: this.nodes[i + 1],
-				stiffness: 0.05,
+				stiffness: rnd_float(0.2, 0.01),
 				length: rnd(100, 70),
 				extended_length : rnd(length, length + 50)
 			});
@@ -120,7 +121,7 @@ var Creature = function() {
 				},
 				bodyA: this.nodes[index],
 				bodyB: this.nodes[index2],
-				stiffness: 0.05,
+				stiffness: rnd_float(0.2, 0.01),
 				length: rnd(100, 70),
 				extended_length : rnd(length, length + 50)
 			}));
@@ -145,13 +146,42 @@ var Creature = function() {
 		}
 	}
 
+	this.fitness = -1;
+
+	this.calculate_fitness = function(callback) {
+		let n = this.nodes.length;
+		let sum = 0;
+		self.nodes.forEach(function(element) {
+			sum += element.position.x;
+		});
+
+	
+		return callback(sum / n);
+	}
+
 	this.interval = setInterval(this.contract, 200);
+
+	this.despawn = function() {
+		self.calculate_fitness(function(fitness) {
+			self.nodes.forEach(function(element) {
+				Composite.remove(world, element);
+			});
+
+			self.muscles.forEach(function(element) {
+				Composite.remove(world, element);
+			});
+
+			self.fitness = fitness;
+			console.log(self.fitness);
+		});
+	}
 }
 
 start = function() {
 	let c = new Creature();
 	c.build();
 	c.spawn();
+	setTimeout(c.despawn, 5000);
 }
 
 start();

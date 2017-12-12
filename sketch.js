@@ -25,7 +25,7 @@ var render = Render.create({
 Render.run(render);
 
 var runner = Runner.create({
-	delta: 1000 / 60,
+	delta: 0.01,
 	isFixed: false,
     enabled: true
 });
@@ -153,11 +153,44 @@ var Creature = function() {
 		Matter.Events.on(engine, "afterUpdate", function() {
 			if(engine.timing.timestamp - start > 5000) {
 				self.despawn();
+				engine.events = {};
 			}
 		});
 	}
 
 	this.fitness = -1;
+
+	this.mutate = function(){
+		console.log("Mutate");
+		var chance = rnd(3, 0);
+		var increment;
+		//cambiar el stiffness
+		if(chance == 0){
+			chance = rnd(this.muscles.length - 1, 0);
+			this.muscles[chance].stiffness = this.muscles[chance].stiffness - 0.05 + 0.1*Math.Random();
+		}
+		//cambiar el length
+		else if(chance == 1){
+			chance = rnd(this.muscles.length -1, 0);
+			increment = rnd(0, 20);
+			this.muscles[chance].length = this.muscles[chance].length - 10 + increment;
+			if(this.muscles[chance].length >= this.muscles[chance].extended_length)
+				this.muscles[chance].extended_length = this.muscles[chance].extended_length - 10 + increment;
+		}
+		//cambiar el ext length
+		else if(chance == 2){
+			chance = rnd(this.muscles.length - 1, 0);
+			increment = rnd(30, 0);
+			this.muscles[chance].extended_length = this.muscles[chance].extended_length - 15 + increment;
+			if(this.muscles[chance].extended_length <= this.muscles[chance].length)
+				this.muscles[chance].length = this.muscles[chance].length - 15 + increment;
+		}
+		else{
+			chance = rnd(0, nodes.length-1);
+			nodes[chance].position.x = nodes[chance].position.x - 15 + rnd(30, 0);
+			nodes[chance].position.y = nodes[chance].position.y - 15 + rnd(30, 0);
+		}
+	}
 
 	this.calculate_fitness = function(callback) {
 		let n = this.nodes.length;
@@ -182,13 +215,12 @@ var Creature = function() {
 			});
 
 			self.fitness = fitness;
-			console.log("Fitness: " + self.fitness);
 		});
 	}
 }
 
 start = function() {
-	console.log(engine.delta);
+	engine.timing.timeScale = 1;
 	let c = new Creature();
 	c.build();
 	c.spawn();

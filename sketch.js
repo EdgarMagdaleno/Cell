@@ -24,7 +24,11 @@ var render = Render.create({
 
 Render.run(render);
 
-var runner = Runner.create();
+var runner = Runner.create({
+	delta: 1000 / 60,
+	isFixed: false,
+    enabled: true
+});
 Runner.run(runner, engine);
 
 World.add(world, [
@@ -144,6 +148,13 @@ var Creature = function() {
 		for(let i = 0; i < this.muscles.length; i++) {
 			World.add(world, this.muscles[i]);
 		}
+
+		var start = engine.timing.timestamp;
+		Matter.Events.on(engine, "afterUpdate", function() {
+			if(engine.timing.timestamp - start > 5000) {
+				self.despawn();
+			}
+		});
 	}
 
 	this.fitness = -1;
@@ -154,7 +165,6 @@ var Creature = function() {
 		self.nodes.forEach(function(element) {
 			sum += element.position.x;
 		});
-
 	
 		return callback(sum / n);
 	}
@@ -172,16 +182,16 @@ var Creature = function() {
 			});
 
 			self.fitness = fitness;
-			console.log(self.fitness);
+			console.log("Fitness: " + self.fitness);
 		});
 	}
 }
 
 start = function() {
+	console.log(engine.delta);
 	let c = new Creature();
 	c.build();
 	c.spawn();
-	setTimeout(c.despawn, 5000);
 }
 
 start();

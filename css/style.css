@@ -30,10 +30,6 @@ body {
   background-color: #CCC;
 }
 
-#generation-preview, #generation-view {
-  display: none;
-}
-
 #creature-video {
   height: 500px;
   padding: 0;

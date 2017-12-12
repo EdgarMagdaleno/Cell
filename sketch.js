@@ -140,7 +140,8 @@ var Creature = function() {
 		}
 	}
 
-	this.spawn = function() {
+	this.spawn = function(generation) {
+		this.generation = generation;
 		for(let i = 0; i < this.nodes.length; i++) {
 			World.add(world, this.nodes[i]);
 		}
@@ -153,7 +154,6 @@ var Creature = function() {
 		Matter.Events.on(engine, "afterUpdate", function() {
 			if(engine.timing.timestamp - start > 5000) {
 				self.despawn();
-				engine.events = {};
 			}
 		});
 	}
@@ -215,15 +215,41 @@ var Creature = function() {
 			});
 
 			self.fitness = fitness;
+			console.log("Fitness: " + fitness);
+			engine.events = {};
+			new_creature(self.generation);
 		});
 	}
 }
 
+var generations = [];
+
+var new_generation = function() {
+	generation = [];
+	generations.push(generation);
+	return generation;
+}
+
+var new_creature = function(generation) {
+	console.log("New creature ");
+	if (generation.length > 9)
+		return;
+
+	console.log(generation);
+
+	var c = new Creature();
+	c.build();
+	c.spawn(generation);
+	generation.push(c);
+}
+
 start = function() {
+	var g = new_generation();
+
 	engine.timing.timeScale = 1;
 	let c = new Creature();
 	c.build();
-	c.spawn();
+	c.spawn(g);
 }
 
 start();

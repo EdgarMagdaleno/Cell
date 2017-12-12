@@ -17,25 +17,43 @@ var render = Render.create({
 	engine: engine,
 	options: {
 		width: 2000,
-		height: 600,
-		showAngleIndicator: true
+		height: 600
 	}
 });
 
 Render.run(render);
 
 var runner = Runner.create({
-	delta: 0.01,
 	isFixed: false,
     enabled: true
 });
 Runner.run(runner, engine);
 
 World.add(world, [
-	Bodies.rectangle(400, 0, 3000, 50, { isStatic: true }),
-	Bodies.rectangle(400, 600, 3000, 50, { isStatic: true }),
-	Bodies.rectangle(1900, 300, 50, 600, { isStatic: true }),
-	Bodies.rectangle(0, 300, 50, 600, { isStatic: true })
+	Bodies.rectangle(400, 0, 3000, 50, {
+		collisionFilter : {
+			group : 1
+		},
+		isStatic: true
+	}),
+	Bodies.rectangle(400, 600, 3000, 50, {
+		collisionFilter : {
+			group : 1
+		},
+		isStatic: true
+	}),
+	Bodies.rectangle(1900, 300, 50, 600, {
+		collisionFilter : {
+			group : 1
+		},
+		isStatic: true
+	}),
+	Bodies.rectangle(0, 300, 50, 600, {
+		collisionFilter : {
+			group : 1
+		},
+		isStatic: true
+	}),
 ]);
 
 var mouse = Mouse.create(render.canvas),
@@ -52,11 +70,6 @@ var mouse = Mouse.create(render.canvas),
 World.add(world, mouseConstraint);
 
 render.mouse = mouse;
-
-Render.lookAt(render, {
-	min: { x: 0, y: 0 },
-	max: { x: 2000, y: 600 }
-});
 
 rnd = function(max, min) {
 	return Math.floor((Math.random() * (max - min)) + min);
@@ -75,8 +88,20 @@ var Creature = function() {
 	    this.nodes.length = rnd(4, 6);
 
 		for(let i = 0; i < this.nodes.length; i++) {
-			this.nodes[i] = Bodies.circle(rnd(300, 140), rnd(300, 140), 20);
+			// rnd(300, 140), rnd(300, 140)
+			this.nodes[i] = Bodies.circle(rnd(300, 140), rnd(300, 140), 20, {
+                collisionFilter: {
+                	group : -1
+                },
+                render: {
+                    strokeStyle: 'red',
+                    fillStyle: 'transparent',
+                    lineWidth: 1
+                }
+            });
 			this.nodes[i].friction = rnd_float(0.99, 0.01);
+			this.nodes[i].inertia = Infinity;
+			this.nodes[i].groupId = 1;
 			Matter.Body.setMass(this.nodes[i], 0.5);
 		}
 
@@ -151,11 +176,6 @@ var Creature = function() {
 		}
 
 		var start = engine.timing.timestamp;
-		Matter.Events.on(engine, "afterUpdate", function() {
-			if(engine.timing.timestamp - start > 5000) {
-				self.despawn();
-			}
-		});
 	}
 
 	this.fitness = -1;
@@ -192,64 +212,65 @@ var Creature = function() {
 		}
 	}
 
-	this.calculate_fitness = function(callback) {
+	this.calculate_fitness = function() {
 		let n = this.nodes.length;
 		let sum = 0;
 		self.nodes.forEach(function(element) {
 			sum += element.position.x;
 		});
-	
-		return callback(sum / n);
+		
+		this.fitness = sum / n;
 	}
 
 	this.interval = setInterval(this.contract, 200);
 
 	this.despawn = function() {
-		self.calculate_fitness(function(fitness) {
-			self.nodes.forEach(function(element) {
-				Composite.remove(world, element);
-			});
+		self.nodes.forEach(function(element) {
+			Composite.remove(world, element);
+		});
 
-			self.muscles.forEach(function(element) {
-				Composite.remove(world, element);
-			});
-
-			self.fitness = fitness;
-			console.log("Fitness: " + fitness);
-			engine.events = {};
-			new_creature(self.generation);
+		self.muscles.forEach(function(element) {
+			Composite.remove(world, element);
 		});
 	}
 }
 
 var generations = [];
 
-var new_generation = function() {
+var new_generation = function(size, time, done) {
 	generation = [];
 	generations.push(generation);
-	return generation;
+
+	for(let i = 0; i < size; i++) {
+		generation.push(create_creature());
+	}
+
+	let start = engine.timing.timestamp;
+	Matter.Events.on(engine, "afterUpdate", function() {
+		if(engine.timing.timestamp - start > time) {
+			for(let i = 0; i < size; i++) {
+				generation[i].calculate_fitness();
+				generation[i].despawn();
+			}
+
+			engine.events = {};
+
+			return done();
+		}
+	});
 }
 
-var new_creature = function(generation) {
-	console.log("New creature ");
-	if (generation.length > 9)
-		return;
-
-	console.log(generation);
-
+var create_creature = function() {
 	var c = new Creature();
 	c.build();
-	c.spawn(generation);
-	generation.push(c);
+	c.spawn();
+	return c;
 }
 
 start = function() {
-	var g = new_generation();
-
-	engine.timing.timeScale = 1;
-	let c = new Creature();
-	c.build();
-	c.spawn(g);
+	new_generation(50, 5000, function() {
+		
+	});
 }
 
 start();

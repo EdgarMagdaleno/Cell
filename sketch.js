@@ -109,8 +109,10 @@ var Creature = function() {
 
 	this.reset_position = function() {
 		this.nodes.forEach(function(element, i) {
-			element.position.x = self.initial_position[i].x;
-			element.position.y = self.initial_position[i].y;
+			Matter.Body.setPosition(element, {
+				x: self.initial_position[i].x,
+				y: self.initial_position[i].y
+			});
 		});
 	}
 

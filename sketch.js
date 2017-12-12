@@ -79,16 +79,45 @@ rnd_float = function(max, min) {
 	return (Math.random() * (max - min)) + min;
 }
 
+function deepClone(obj, hash = new WeakMap()) {
+    // Do not try to clone primitives or functions
+    if (Object(obj) !== obj || obj instanceof Function) return obj;
+    if (hash.has(obj)) return hash.get(obj); // Cyclic reference
+    try { // Try to run constructor (without arguments, as we don't know them)
+        var result = new obj.constructor();
+    } catch(e) { // Constructor failed, create object without running the constructor
+        result = Object.create(Object.getPrototypeOf(obj));
+    }
+    // Optional: support for some standard constructors (extend as desired)
+    if (obj instanceof Map)
+        Array.from(obj, ([key, val]) => result.set(deepClone(key, hash), 
+                                                   deepClone(val, hash)) );
+    else if (obj instanceof Set)
+        Array.from(obj, (key) => result.add(deepClone(key, hash)) );
+    // Register in hash    
+    hash.set(obj, result);
+    // Clone and assign enumerable own properties recursively
+    return Object.assign(result, ...Object.keys(obj).map (
+        key => ({ [key]: deepClone(obj[key], hash) }) ));
+}
+
 var Creature = function() {
 	this.nodes = [];
+	this.initial_position = [];
 	this.muscles = [];
 	var self = this;
+
+	this.reset_position = function() {
+		this.nodes.forEach(function(element, i) {
+			element.position.x = self.initial_position[i].x;
+			element.position.y = self.initial_position[i].y;
+		});
+	}
 
 	this.build = function() {
 	    this.nodes.length = rnd(4, 6);
 
 		for(let i = 0; i < this.nodes.length; i++) {
-			// rnd(300, 140), rnd(300, 140)
 			this.nodes[i] = Bodies.circle(rnd(300, 140), rnd(300, 140), 20, {
                 collisionFilter: {
                 	group : -1
@@ -99,6 +128,10 @@ var Creature = function() {
                     lineWidth: 1
                 }
             });
+
+			this.initial_position[i] = {};
+            this.initial_position[i].x = this.nodes[i].position.x;
+            this.initial_position[i].y = this.nodes[i].position.y;
 			this.nodes[i].friction = rnd_float(0.99, 0.01);
 			this.nodes[i].inertia = Infinity;
 			this.nodes[i].groupId = 1;
@@ -187,7 +220,7 @@ var Creature = function() {
 		//cambiar el stiffness
 		if(chance == 0){
 			chance = rnd(this.muscles.length - 1, 0);
-			this.muscles[chance].stiffness = this.muscles[chance].stiffness - 0.05 + 0.1*Math.Random();
+			this.muscles[chance].stiffness = this.muscles[chance].stiffness - 0.05 + 0.1*Math.random();
 		}
 		//cambiar el length
 		else if(chance == 1){
@@ -205,11 +238,6 @@ var Creature = function() {
 			if(this.muscles[chance].extended_length <= this.muscles[chance].length)
 				this.muscles[chance].length = this.muscles[chance].length - 15 + increment;
 		}
-		else{
-			chance = rnd(0, nodes.length-1);
-			nodes[chance].position.x = nodes[chance].position.x - 15 + rnd(30, 0);
-			nodes[chance].position.y = nodes[chance].position.y - 15 + rnd(30, 0);
-		}
 	}
 
 	this.calculate_fitness = function() {
@@ -225,6 +253,7 @@ var Creature = function() {
 	this.interval = setInterval(this.contract, 200);
 
 	this.despawn = function() {
+		self.reset_position();
 		self.nodes.forEach(function(element) {
 			Composite.remove(world, element);
 		});
@@ -235,42 +264,63 @@ var Creature = function() {
 	}
 }
 
-var generations = [];
+var generation = [];
 
-var new_generation = function(size, time, done) {
-	generation = [];
-	generations.push(generation);
-
+new_generation = function(size) {
 	for(let i = 0; i < size; i++) {
 		generation.push(create_creature());
+	}
+}
+
+run_generation = function(time, done) {
+	console.log("Run");
+	for(let i = 0; i < generation.length; i++) {
+		generation[i].spawn();
 	}
 
 	let start = engine.timing.timestamp;
 	Matter.Events.on(engine, "afterUpdate", function() {
 		if(engine.timing.timestamp - start > time) {
-			for(let i = 0; i < size; i++) {
+			console.log("Despawn");
+			for(let i = 0; i < generation.length; i++) {
 				generation[i].calculate_fitness();
 				generation[i].despawn();
 			}
 
 			engine.events = {};
-
 			return done();
 		}
 	});
 }
 
-var create_creature = function() {
+create_creature = function() {
 	var c = new Creature();
 	c.build();
-	c.spawn();
 	return c;
 }
 
-start = function() {
-	new_generation(50, 5000, function() {
-		
+mutate_generation = function(time) {
+	generation.sort(function(a, b) {
+		return b.fitness - a.fitness;
 	});
+
+	for(let i = 25; i < generation.length; i++) {
+		generation[i].mutate();
+	}
+
+	run_generation(time, function() {
+		mutate_generation(time);
+	})
+}
+
+start = function() {
+	let size = 50;
+	let time = 5000;
+	new_generation(size);
+
+	run_generation(time, function() {
+		mutate_generation(time);
+	})
 }
 
 start();
